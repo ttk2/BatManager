@@ -1,0 +1,81 @@
+---
+- hosts: mesh
+  tasks:
+  - name: Check that packages are installed Fedora
+    dnf:
+      name: "{{item}}"
+      state: present
+    with_items: "{{packages_fedora}}"
+    when: ansible_distribution == "Fedora"
+    become: true
+
+  - name: Check that packages are installed Debian
+    apt:
+      name: "{{item}}"
+      state: present
+    with_items: "{{packages_raspbian}}"
+    when: ansible_distribution == "Debian"
+    become: true
+
+  - name: Copy over source folders
+    synchronize:
+      src: "{{item}}"
+      dest: "{{item | basename}}"
+    with_items: "{{src}}"
+
+  - name: Config
+    make:
+      chdir: "{{item | basename}}"
+      target: config
+    with_items: "{{src_config}}"
+    become: true
+
+  - name: Build
+    make:
+      chdir: "{{item | basename}}"
+      params:
+        NUM_THREADS: 4
+    with_items: "{{src}}"
+    become: true
+
+  - name: Install
+    make:
+      chdir: "{{item | basename}}"
+      target: install
+    become: true
+    with_items: "{{src}}"
+
+  - name: Unload the Batman-adv kernel module
+    modprobe: name=batman-adv state=absent
+    become: true
+
+  - name: Load the Batman-adv kernel module
+    modprobe: name=batman-adv state=present
+    become: true
+
+  - name: Setup eth0
+    shell: "ip link set up dev {{wired_interface}}"
+    become: true
+
+  - name: Set wlan mtu
+    shell: "ip link set mtu {{mtu}} dev {{interface}}"
+    become: true
+
+  - name: Set wlan devices to ad-hoc mode
+    shell: "iwconfig {{interface}} mode ad-hoc essid {{mesh_name}} ap 02:12:34:56:78:9A channel 1"
+    become: true
+
+# we have to use sudo -i here because of Fedora cleaning
+# the path variables for security. Meaning we can't run batcl
+# from the users binary folder
+  - name: Add interface to Batman
+    shell: "sudo -i batctl if add {{interface}}"
+
+  - name: Bring up wlan interface
+    shell: "ip link set up dev {{interface}}"
+    become: true
+
+  - name: Bring up Batman interface
+    shell: ip link set up dev bat0
+    become: true
+ 

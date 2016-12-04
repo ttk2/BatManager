@@ -1,0 +1,6 @@
+#nodes go in both the mesh category and a hardware category
+[mesh]
+ip_addr  ansible_user=username
+[pi]
+[intel]
+

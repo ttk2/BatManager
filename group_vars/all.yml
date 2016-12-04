@@ -1,0 +1,21 @@
+#source files that need the "make config" step
+src_config:
+- batman-adv
+#source files to be built and installed
+src:
+- batctl
+- batman-adv
+packages_fedora:
+- kernel-devel
+- libnl3-devel
+- rsync
+- git
+packages_raspbian:
+- raspberrypi-kernel
+- raspberrypi-kernel-headers
+- libnl-3-dev
+- libnl-genl-3-dev
+- rsync
+- git
+mtu: 1532
+mesh_name: test

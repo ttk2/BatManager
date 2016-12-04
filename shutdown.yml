@@ -1,0 +1,6 @@
+---
+- hosts: mesh
+  tasks:
+  - name: Shutting down safely
+    shell: "shutdown now"
+    become: true
